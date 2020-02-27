@@ -3,6 +3,8 @@ import argparse
 import conllu
 from conllu import TokenList
 
+from ufal.udpipe import Pipeline, ProcessingError, Model
+
 
 #################################################
 # UTILS
@@ -11,7 +13,10 @@ from conllu import TokenList
 
 # TODO:
 # * Can PCC files be identified based on the ID?
-# * In .cupt metadata, is `orig_file_sentence` always consistent with `source_sent_id`?
+# * In .cupt metadata, is `orig_file_sentence` always consistent with
+# `source_sent_id`?
+# * For PCC, should we preserve tokenization?  What about non-PCC sentences?
+# * Where to put new files?  Gitlab parseme_pl repo?
 
 
 # The list of text ID prefixes which allow to identify the source.
@@ -56,6 +61,33 @@ def collect_dataset(paths: List[str]) -> List[TokenList]:
 
 
 #################################################
+# UDPipe
+#################################################
+
+
+def parse_raw_with_udpipe(model, text: str) -> List[TokenList]:
+    """Use UDPipe to parse the given raw text."""
+    pipeline = Pipeline(model, "tokenizer", Pipeline.DEFAULT,
+                        Pipeline.DEFAULT, "conllu")
+    error = ProcessingError()
+    processed = pipeline.process(text, error)
+    assert not error.occurred()
+    return conllu.parse(processed)
+
+
+def parse_with_udpipe(model, sent: TokenList) -> TokenList:
+    """Use UDPipe to parse the given .conllu sentence."""
+    pipeline = Pipeline(model, "conllu", Pipeline.DEFAULT,
+                        Pipeline.DEFAULT, "conllu")
+    error = ProcessingError()
+    processed = pipeline.process(sent.serialize(), error)
+    assert not error.occurred()
+    parsed = conllu.parse(processed)
+    assert len(parsed) == 1
+    return parsed[0]
+
+
+#################################################
 # ARGUMENTS
 #################################################
 
@@ -83,6 +115,25 @@ def mk_arg_parser():
     #                         required=False,
     #                         help="source ID to handle",
     #                         metavar="FILE")
+
+    parser_parse = subparsers.add_parser(
+        'parse', help='parse (with UDPipe) input files')
+    parser_parse.add_argument("-i",
+                              dest="paths",
+                              required=True,
+                              nargs='+',
+                              help="input .conllu/.cupt files",
+                              metavar="FILE")
+    parser_parse.add_argument("-m",
+                              dest="udpipe_model",
+                              required=True,
+                              help="input UDPipe model",
+                              metavar="FILE")
+    parser_parse.add_argument("--raw",
+                              dest="parse_raw",
+                              action="store_true",
+                              help="parse raw text (includes tokenization)")
+
     return parser
 
 
@@ -103,6 +154,24 @@ def do_split(args):
 
 
 #################################################
+# PARSE
+#################################################
+
+
+def do_parse(args):
+    dataset = collect_dataset(args.paths)
+    model = Model.load(args.udpipe_model)
+    for sent in dataset:
+        if args.parse_raw:
+            text = sent.metadata["text"]
+            parsed = parse_raw_with_udpipe(model, text)
+        else:
+            parsed = [parse_with_udpipe(model, sent)]
+        for sent in parsed:
+            print(sent.serialize(), end='')
+
+
+#################################################
 # MAIN
 #################################################
 
@@ -112,3 +181,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.command == 'split':
         do_split(args)
+    if args.command == 'parse':
+        do_parse(args)
