@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional, Tuple
 import argparse
 import conllu
 from conllu import TokenList
@@ -12,10 +12,14 @@ from ufal.udpipe import Pipeline, ProcessingError, Model
 
 
 # TODO:
+# * Add option to preserve input UPOS and FEATS.
 # * Can PCC files be identified based on the ID?
+#   <- YES
 # * In .cupt metadata, is `orig_file_sentence` always consistent with
 # `source_sent_id`?
+#   <- ADD CHECK
 # * For PCC, should we preserve tokenization?  What about non-PCC sentences?
+#   <- YES, KEEP TOKENIZATION
 # * Where to put new files?  Gitlab parseme_pl repo?
 
 
@@ -39,11 +43,16 @@ def text_source(text_id: str) -> str:
     return PCC
 
 
-def split_by_ids(dataset: List[TokenList]) -> Dict[str, List[TokenList]]:
-    """Split the given dataset based on IDs."""
+def get_sent_id(sent: TokenList) -> str:
+    """Determine the sentence ID."""
+    return sent.metadata["orig_file_sentence"].split('#')[0]
+
+
+def split_by_source(dataset: List[TokenList]) -> Dict[str, List[TokenList]]:
+    """Split the given dataset based on source IDs."""
     res = dict((src, []) for src in SOURCE_IDS)
     for sent in dataset:
-        src = text_source(sent.metadata["orig_file_sentence"])
+        src = text_source(get_sent_id(sent))
         if src not in SOURCE_IDS:
             raise Exception(f"{src} not in {SOURCE_IDS}")
         res[src].append(sent)
@@ -75,9 +84,10 @@ def parse_raw_with_udpipe(model, text: str) -> List[TokenList]:
     return conllu.parse(processed)
 
 
-def parse_with_udpipe(model, sent: TokenList) -> TokenList:
+def parse_with_udpipe(model, sent: TokenList, use_tagger=True) -> TokenList:
     """Use UDPipe to parse the given .conllu sentence."""
-    pipeline = Pipeline(model, "conllu", Pipeline.DEFAULT,
+    tagger_opt = Pipeline.DEFAULT if use_tagger else Pipeline.NONE
+    pipeline = Pipeline(model, "conllu", tagger_opt,
                         Pipeline.DEFAULT, "conllu")
     error = ProcessingError()
     processed = pipeline.process(sent.serialize(), error)
@@ -85,6 +95,35 @@ def parse_with_udpipe(model, sent: TokenList) -> TokenList:
     parsed = conllu.parse(processed)
     assert len(parsed) == 1
     return parsed[0]
+
+
+#################################################
+# ALIGNMENT
+#################################################
+
+
+def data_by_id(dataset: List[TokenList]) -> Dict[str, TokenList]:
+    """Determine the map from sentence IDs to sentences."""
+    res = dict()
+    for sent in dataset:
+        sid = get_sent_id(sent)
+        assert sid not in res
+        res[sid] = sent
+    return res
+
+
+def align(source: List[TokenList], dest: List[TokenList]) \
+        -> List[Tuple[TokenList, Optional[TokenList]]]:
+    """For each sentence in `dest`, find the corresponding sentence
+    in `source`.
+    """
+    source_by_id = data_by_id(source)
+    res = []
+    for sent in dest:
+        sid = get_sent_id(sent)
+        source_sent = source_by_id.get(sid)
+        res.append((source_sent, sent))
+    return res
 
 
 #################################################
@@ -133,6 +172,25 @@ def mk_arg_parser():
                               dest="parse_raw",
                               action="store_true",
                               help="parse raw text (includes tokenization)")
+    parser_parse.add_argument("--disable-tagger",
+                              dest="disable_tagger",
+                              action="store_true",
+                              help="disable UDPipe tagger (only parsing)")
+
+    parser_align = subparsers.add_parser(
+        'align', help='align')
+    parser_align.add_argument("-s",
+                              dest="source",
+                              required=True,
+                              nargs='+',
+                              help="source .conllu/.cupt files",
+                              metavar="FILE")
+    parser_align.add_argument("-d",
+                              dest="dest",
+                              required=True,
+                              nargs='+',
+                              help="dest .conllu/.cupt files",
+                              metavar="FILE")
 
     return parser
 
@@ -144,7 +202,7 @@ def mk_arg_parser():
 
 def do_split(args):
     dataset = collect_dataset(args.paths)
-    datadict = split_by_ids(dataset)
+    datadict = split_by_source(dataset)
     for (src, sents) in datadict.items():
         out_path = args.out_dir + "/" + src + ".cupt"
         with open(out_path, "w", encoding="utf-8") as data_file:
@@ -166,9 +224,23 @@ def do_parse(args):
             text = sent.metadata["text"]
             parsed = parse_raw_with_udpipe(model, text)
         else:
-            parsed = [parse_with_udpipe(model, sent)]
+            use_tagger = not args.disable_tagger
+            parsed = [parse_with_udpipe(model, sent, use_tagger=use_tagger)]
         for sent in parsed:
             print(sent.serialize(), end='')
+
+
+#################################################
+# ALIGN
+#################################################
+
+
+def do_align(arcs):
+    source_data = collect_dataset(args.source)
+    dest_data = collect_dataset(args.dest)
+    for src, dst in align(source_data, dest_data):
+        print(dst.metadata['text'])
+        print("=>", src is not None)
 
 
 #################################################
@@ -183,3 +255,5 @@ if __name__ == '__main__':
         do_split(args)
     if args.command == 'parse':
         do_parse(args)
+    if args.command == 'align':
+        do_align(args)
