@@ -19,4 +19,4 @@ python3 main.py parse -i $DATA/$SPLIT/PCC.cupt -m $DATA/$UDPIPE_PL > $DATA/$PCC/
 
 # Merge the original .cupt PCC file with UDPipe's output.
 cd $DATA
-$TO_CUPT --input $SPLIT/PCC.cupt --conllu $PCC/udpipe.conllu --lang PL > $PCC/udpipe_merged.conllu
+$TO_CUPT --input $SPLIT/PCC.cupt --conllu $PCC/udpipe.conllu --lang PL > $PCC/PCC_udpipe.cupt
