@@ -127,7 +127,7 @@ def align(source: List[TokenList], dest: List[TokenList]) \
         if source_sent and \
                 dest_sent.metadata['text'] != source_sent.metadata['text']:
             print("# text metadata differs:", file=sys.stderr)
-            print("dst", dest_sent.metadata['text'], file=sys.stderr)
+            print("dst:", dest_sent.metadata['text'], file=sys.stderr)
             print("src:", source_sent.metadata['text'], file=sys.stderr)
         res.append((source_sent, dest_sent))
     return res

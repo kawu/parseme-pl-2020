@@ -11,8 +11,8 @@ SPLIT=split
 PCC=out/PCC
 TO_CUPT=./utils/st-organizers/to_cupt.py
 
-# Split the .cupt files based on their source (PCC, 130-2, etc.)
-python3 main.py split -i $DATA/$PARSEME_PL/*.cupt -o $DATA/$SPLIT
+# We assume that splitting is already performed
+# (see the prepare.sh script)
 
 # Parse with UDPipe the PCC part
 python3 main.py parse -i $DATA/$SPLIT/PCC.cupt -m $DATA/$UDPIPE_PL > $DATA/$PCC/udpipe.conllu
