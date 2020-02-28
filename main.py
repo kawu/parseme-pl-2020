@@ -1,5 +1,7 @@
 from typing import List, Dict, Optional, Tuple
 import argparse
+import sys
+
 import conllu
 from conllu import TokenList
 
@@ -119,10 +121,15 @@ def align(source: List[TokenList], dest: List[TokenList]) \
     """
     source_by_id = data_by_id(source)
     res = []
-    for sent in dest:
-        sid = get_sent_id(sent)
+    for dest_sent in dest:
+        sid = get_sent_id(dest_sent)
         source_sent = source_by_id.get(sid)
-        res.append((source_sent, sent))
+        if source_sent and \
+                dest_sent.metadata['text'] != source_sent.metadata['text']:
+            print("# text metadata differs:", file=sys.stderr)
+            print("dst", dest_sent.metadata['text'], file=sys.stderr)
+            print("src:", source_sent.metadata['text'], file=sys.stderr)
+        res.append((source_sent, dest_sent))
     return res
 
 
@@ -239,8 +246,10 @@ def do_align(arcs):
     source_data = collect_dataset(args.source)
     dest_data = collect_dataset(args.dest)
     for src, dst in align(source_data, dest_data):
-        print(dst.metadata['text'])
-        print("=>", src is not None)
+        # print(dst.metadata['text'])
+        # print("=>", src is not None)
+        assert src is not None
+        print(src.serialize(), end='')
 
 
 #################################################
