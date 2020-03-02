@@ -1,7 +1,7 @@
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Iterable
 import argparse
 import sys
-import tarfile
+# import tarfile
 
 import conllu
 from conllu import TokenList
@@ -62,14 +62,12 @@ def split_by_source(dataset: List[TokenList]) -> Dict[str, List[TokenList]]:
     return res
 
 
-def collect_dataset(paths: List[str]) -> List[TokenList]:
+def collect_dataset(paths: List[str]) -> Iterable[TokenList]:
     """Collect the dataset from the given .cupt files."""
-    dataset = []
     for path in paths:
         with open(path, "r", encoding="utf-8") as data_file:
             for sent in conllu.parse_incr(data_file):
-                dataset.append(sent)
-    return dataset
+                yield sent
 
 
 #################################################
@@ -222,7 +220,7 @@ def mk_arg_parser():
 
 
 def do_split(args):
-    dataset = collect_dataset(args.paths)
+    dataset = list(collect_dataset(args.paths))
     datadict = split_by_source(dataset)
     for (src, sents) in datadict.items():
         out_path = args.out_dir + "/" + src + ".cupt"
@@ -279,8 +277,8 @@ def do_parse(args):
 
 
 def do_align(arcs):
-    source_data = collect_dataset(args.source)
-    dest_data = collect_dataset(args.dest)
+    source_data = list(collect_dataset(args.source))
+    dest_data = list(collect_dataset(args.dest))
     for src, dst in align(source_data, dest_data):
         # print(dst.metadata['text'])
         # print("=>", src is not None)
