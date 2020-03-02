@@ -200,18 +200,18 @@ def mk_arg_parser():
                               help="dest .conllu/.cupt files",
                               metavar="FILE")
 
-    parser_conllu = subparsers.add_parser(
-        'conllu', help='re-parse (with UDPipe) conllu raw .tar.gz')
-    parser_conllu.add_argument("-i",
-                               dest="tar_path",
-                               required=True,
-                               help="input .tar.gz",
-                               metavar="FILE")
-    parser_conllu.add_argument("-m",
-                               dest="udpipe_model",
-                               required=True,
-                               help="input UDPipe model",
-                               metavar="FILE")
+    # parser_conllu = subparsers.add_parser(
+    #     'conllu', help='re-parse (with UDPipe) conllu raw .tar.gz')
+    # parser_conllu.add_argument("-i",
+    #                            dest="tar_path",
+    #                            required=True,
+    #                            help="input .tar.gz",
+    #                            metavar="FILE")
+    # parser_conllu.add_argument("-m",
+    #                            dest="udpipe_model",
+    #                            required=True,
+    #                            help="input UDPipe model",
+    #                            metavar="FILE")
 
     return parser
 
@@ -256,21 +256,21 @@ def do_parse(args):
 #################################################
 
 
-def do_process_conllu(args):
-    print("# reading model:", args.udpipe_model)
-    model = Model.load(args.udpipe_model)
-    tar = tarfile.open(args.tar_path, "r:*", encoding="utf-8")
-    for member in tar.getmembers():
-        print("#", member.name)
-        # with out_file =
-        inp_file = tar.extractfile(member)
-        for sent in conllu.parse_incr(inp_file):
-            text = sent.metadata["text"]
-            parsed = parse_raw_with_udpipe(model, text)
-            for sent in parsed:
-                print(sent.serialize(), end='')
-        # if f is not None:
-        #     dataset =
+# def do_process_conllu(args):
+#     print("# reading model:", args.udpipe_model)
+#     model = Model.load(args.udpipe_model)
+#     tar = tarfile.open(args.tar_path, "r:*", encoding="utf-8")
+#     for member in tar.getmembers():
+#         print("#", member.name)
+#         # with out_file =
+#         inp_file = tar.extractfile(member)
+#         for sent in conllu.parse_incr(inp_file):
+#             text = sent.metadata["text"]
+#             parsed = parse_raw_with_udpipe(model, text)
+#             for sent in parsed:
+#                 print(sent.serialize(), end='')
+#         # if f is not None:
+#         #     dataset =
 
 
 #################################################
@@ -302,5 +302,5 @@ if __name__ == '__main__':
         do_parse(args)
     if args.command == 'align':
         do_align(args)
-    if args.command == 'conllu':
-        do_process_conllu(args)
+    # if args.command == 'conllu':
+    #     do_process_conllu(args)
