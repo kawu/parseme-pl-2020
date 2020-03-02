@@ -257,10 +257,18 @@ def do_parse(args):
 
 
 def do_process_conllu(args):
-    tar = tarfile.open(args.tar_path, "r:*")
+    print("# reading model:", args.udpipe_model)
+    model = Model.load(args.udpipe_model)
+    tar = tarfile.open(args.tar_path, "r:*", encoding="utf-8")
     for member in tar.getmembers():
-        print(member.name)
-        # f = tar.extractfile(member)
+        print("#", member.name)
+        # with out_file =
+        inp_file = tar.extractfile(member)
+        for sent in conllu.parse_incr(inp_file):
+            text = sent.metadata["text"]
+            parsed = parse_raw_with_udpipe(model, text)
+            for sent in parsed:
+                print(sent.serialize(), end='')
         # if f is not None:
         #     dataset =
 
