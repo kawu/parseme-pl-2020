@@ -201,7 +201,7 @@ def mk_arg_parser():
                               metavar="FILE")
 
     parser_conllu = subparsers.add_parser(
-        'parse', help='re-parse (with UDPipe) conllu raw .tar.gz')
+        'conllu', help='re-parse (with UDPipe) conllu raw .tar.gz')
     parser_conllu.add_argument("-i",
                                dest="tar_path",
                                required=True,
