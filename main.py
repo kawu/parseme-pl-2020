@@ -82,7 +82,12 @@ def parse_raw_with_udpipe(model, text: str) -> List[TokenList]:
     error = ProcessingError()
     processed = pipeline.process(text, error)
     assert not error.occurred()
-    return conllu.parse(processed)
+    parsed = conllu.parse(processed)
+    # In metadata, keep only info about text
+    for sent in parsed:
+        meta = {'text': sent.metadata['text']}
+        sent.metadata = meta
+    return parsed
 
 
 def parse_with_udpipe(model, sent: TokenList, use_tagger=True) -> TokenList:
