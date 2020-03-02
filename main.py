@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional, Tuple
 import argparse
 import sys
+import tarfile
 
 import conllu
 from conllu import TokenList
@@ -199,6 +200,19 @@ def mk_arg_parser():
                               help="dest .conllu/.cupt files",
                               metavar="FILE")
 
+    parser_conllu = subparsers.add_parser(
+        'parse', help='re-parse (with UDPipe) conllu raw .tar.gz')
+    parser_conllu.add_argument("-i",
+                               dest="tar_path",
+                               required=True,
+                               help="input .tar.gz",
+                               metavar="FILE")
+    parser_conllu.add_argument("-m",
+                               dest="udpipe_model",
+                               required=True,
+                               help="input UDPipe model",
+                               metavar="FILE")
+
     return parser
 
 
@@ -238,6 +252,20 @@ def do_parse(args):
 
 
 #################################################
+# PROCESS conllu .tar.xz
+#################################################
+
+
+def do_process_conllu(args):
+    tar = tarfile.open(args.tar_path, "r:*")
+    for member in tar.getmembers():
+        print(member.name)
+        # f = tar.extractfile(member)
+        # if f is not None:
+        #     dataset =
+
+
+#################################################
 # ALIGN
 #################################################
 
@@ -266,3 +294,5 @@ if __name__ == '__main__':
         do_parse(args)
     if args.command == 'align':
         do_align(args)
+    if args.command == 'conllu':
+        do_process_conllu(args)
