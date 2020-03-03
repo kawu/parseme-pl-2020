@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Tuple, Iterable
+from typing import List, Dict, Optional, Tuple, Iterable, Set
 import typing
 import argparse
 import sys
@@ -10,11 +10,6 @@ from conllu import TokenList
 from conllu.parser import serialize_field
 
 from ufal.udpipe import Pipeline, ProcessingError, Model
-
-
-#################################################
-# UTILS
-#################################################
 
 
 # TODO:
@@ -29,6 +24,29 @@ from ufal.udpipe import Pipeline, ProcessingError, Model
 # * Where to put new files?  Gitlab parseme_pl repo?
 
 
+#################################################
+# UTILS
+#################################################
+
+
+def get_sent_id(sent: TokenList) -> str:
+    """Determine the sentence ID."""
+    return sent.metadata["orig_file_sentence"].split('#')[0]
+
+
+def collect_dataset(paths: List[str]) -> Iterable[TokenList]:
+    """Collect the dataset from the given .cupt files."""
+    for path in paths:
+        with open(path, "r", encoding="utf-8") as data_file:
+            for sent in conllu.parse_incr(data_file):
+                yield sent
+
+
+#################################################
+# SPLIT
+#################################################
+
+
 # The list of text ID prefixes which allow to identify the source.
 SOURCE_PREFS = {"130-2", "130-3", "130-5", "120-", "310-", "330-"}
 
@@ -36,6 +54,12 @@ SOURCE_PREFS = {"130-2", "130-3", "130-5", "120-", "310-", "330-"}
 # cannot be easily identified based on the text ID).
 PCC = "PCC"
 SOURCE_IDS = SOURCE_PREFS.union({PCC})
+
+
+# The set of possible origin IDs
+PDB = "PDB"
+NKJP = "NKJP"
+ORIG_IDS = [PCC, NKJP, PDB]
 
 
 def text_source(text_id: str) -> str:
@@ -49,9 +73,9 @@ def text_source(text_id: str) -> str:
     return PCC
 
 
-def get_sent_id(sent: TokenList) -> str:
-    """Determine the sentence ID."""
-    return sent.metadata["orig_file_sentence"].split('#')[0]
+def is_pcc(text_id: str) -> bool:
+    """Does the text with the given ID belong to PCC?"""
+    return text_source(text_id) == PCC
 
 
 def split_by_source(dataset: List[TokenList]) -> Dict[str, List[TokenList]]:
@@ -65,12 +89,19 @@ def split_by_source(dataset: List[TokenList]) -> Dict[str, List[TokenList]]:
     return res
 
 
-def collect_dataset(paths: List[str]) -> Iterable[TokenList]:
-    """Collect the dataset from the given .cupt files."""
-    for path in paths:
-        with open(path, "r", encoding="utf-8") as data_file:
-            for sent in conllu.parse_incr(data_file):
-                yield sent
+def split_by_origin(dataset: Iterable[TokenList], pdb_ud_ids: Set[str]) \
+        -> Dict[str, List[TokenList]]:
+    """Split the given dataset based on source IDs."""
+    res = dict((orig, []) for orig in ORIG_IDS)
+    for sent in dataset:
+        sid = get_sent_id(sent)
+        if sid in pdb_ud_ids:
+            res[PDB].append(sent)
+        elif is_pcc(sid):
+            res[PCC].append(sent)
+        else:
+            res[NKJP].append(sent)
+    return res
 
 
 #################################################
@@ -111,7 +142,7 @@ def parse_with_udpipe(model, sent: TokenList, use_tagger=True) -> TokenList:
 #################################################
 
 
-def data_by_id(dataset: List[TokenList]) -> Dict[str, TokenList]:
+def data_by_id(dataset: Iterable[TokenList]) -> Dict[str, TokenList]:
     """Determine the map from sentence IDs to sentences."""
     res = dict()
     for sent in dataset:
@@ -200,7 +231,7 @@ def load_mapping(path: str) -> Dict[str, str]:
     m = dict()
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
-            k, v = line.split("\t")
+            k, v = line.strip().split("\t")
             m[k] = v
     return m
 
@@ -218,10 +249,16 @@ def mk_arg_parser():
 
     parser_split = subparsers.add_parser('split', help='split input files')
     parser_split.add_argument("-i",
-                              dest="paths",
+                              dest="inp_paths",
                               required=True,
                               nargs='+',
                               help="input .conllu/.cupt files",
+                              metavar="FILE")
+    parser_split.add_argument("--pdb",
+                              dest="pdb_paths",
+                              required=True,
+                              nargs='+',
+                              help="input .conllu PDB files",
                               metavar="FILE")
     parser_split.add_argument("-o",
                               dest="out_dir",
@@ -303,6 +340,25 @@ def mk_arg_parser():
                                help="upos conversion map",
                                metavar="FILE")
 
+    parser_convert = subparsers.add_parser(
+        'convert', help='convert the given file w.r.t. the given maps')
+    parser_convert.add_argument("-i",
+                                dest="paths",
+                                required=True,
+                                nargs='+',
+                                help="input .conllu/.cupt files",
+                                metavar="FILE")
+    parser_convert.add_argument("--feats",
+                                dest="feat_path",
+                                required=True,
+                                help="feature conversion map",
+                                metavar="FILE")
+    parser_convert.add_argument("--upos",
+                                dest="upos_path",
+                                required=True,
+                                help="upos conversion map",
+                                metavar="FILE")
+
     return parser
 
 
@@ -312,8 +368,12 @@ def mk_arg_parser():
 
 
 def do_split(args):
-    dataset = list(collect_dataset(args.paths))
-    datadict = split_by_source(dataset)
+    dataset = collect_dataset(args.inp_paths)
+
+    # datadict = split_by_source(dataset)
+    pdb_ids = data_by_id(collect_dataset(args.pdb_paths)).keys()
+    datadict = split_by_origin(dataset, pdb_ud_ids=pdb_ids)
+
     for (src, sents) in datadict.items():
         out_path = args.out_dir + "/" + src + ".cupt"
         with open(out_path, "w", encoding="utf-8") as data_file:
@@ -392,6 +452,33 @@ def do_tagset(args):
     save_mapping(feat_map, args.feat_path)
 
 
+def do_convert(args):
+    # Load conversion maps
+    upos_map = load_mapping(args.upos_path)
+    feat_map = load_mapping(args.feat_path)
+
+    # Conversion w.r.t to the given conversion map
+    def convert(m, x, todo):
+        if x in m:
+            return m[x]
+        else:
+            return todo
+
+    def convert_sent(conv, dest_col, sent, todo):
+        for tok in sent:
+            # print("A", tok, file=sys.stderr)
+            xpos = tok['xpostag']
+            tok[dest_col] = convert(conv, xpos, todo)
+            # print("B", tok, file=sys.stderr)
+
+    # Process dataset
+    dataset = collect_dataset(args.paths)
+    for sent in dataset:
+        convert_sent(upos_map, 'upostag', sent, "TODO")
+        convert_sent(feat_map, 'feats', sent, "TODO=TODO")
+        print(sent.serialize(), end='')
+
+
 #################################################
 # MAIN
 #################################################
@@ -408,3 +495,5 @@ if __name__ == '__main__':
         do_align(args)
     if args.command == 'tagset':
         do_tagset(args)
+    if args.command == 'convert':
+        do_convert(args)
