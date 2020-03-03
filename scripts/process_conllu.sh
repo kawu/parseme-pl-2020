@@ -24,4 +24,6 @@ do
   python3 main.py parse --raw -i $TMP/inp.conllu -m $UDPIPE_PL > $TMP/out.conllu
   xz $TMP/out.conllu
   mv $TMP/out.conllu.xz $OUT/$xz_file
+  # Clean-up
+  rm $TMP/*conllu*
 done
