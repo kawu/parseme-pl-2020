@@ -1,10 +1,13 @@
 from typing import List, Dict, Optional, Tuple, Iterable
+import typing
 import argparse
 import sys
+from collections import Counter
 # import tarfile
 
 import conllu
 from conllu import TokenList
+from conllu.parser import serialize_field
 
 from ufal.udpipe import Pipeline, ProcessingError, Model
 
@@ -138,6 +141,71 @@ def align(source: List[TokenList], dest: List[TokenList]) \
 
 
 #################################################
+# TAGSET
+#################################################
+
+
+# Language-specific POS tag
+XPOS = str
+
+# Features and UPOS
+UPOS = str
+Feats = str
+
+
+def tagset_mapping(dataset: List[TokenList]) \
+        -> Tuple[Dict[XPOS, typing.Counter[UPOS]],
+                 Dict[XPOS, typing.Counter[Feats]]]:
+    """Determine the set of UPOS tags and feature dictionaries
+    for each XPOS in the given dataset.
+    """
+    upos_map, feat_map = dict(), dict()
+
+    def update_map(m, k, v):
+        if k not in m:
+            m[k] = Counter([v])
+        else:
+            m[k].update([v])
+
+    for sent in dataset:
+        for tok in sent:
+            # print(tok)
+            xpos = tok['xpostag']
+            upos = tok['upostag']
+            feats = serialize_field(tok['feats'])
+            update_map(upos_map, xpos, upos)
+            update_map(feat_map, xpos, feats)
+
+    return upos_map, feat_map
+
+
+def most_common(m: Dict[str, typing.Counter[str]]) \
+        -> Dict[str, str]:
+    """Pick the majofiryt class for each key in the input dict."""
+    r = dict()
+    for k, v in m.items():
+        r[k] = v.most_common(1)[0][0]
+    return r
+
+
+def save_mapping(m: Dict[str, str], path: str):
+    """Save mapping in the given file."""
+    with open(path, "w", encoding="utf-8") as f:
+        for k, v in m.items():
+            print(f"{k}\t{v}", file=f)
+
+
+def load_mapping(path: str) -> Dict[str, str]:
+    """Load mapping from the given file."""
+    m = dict()
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            k, v = line.split("\t")
+            m[k] = v
+    return m
+
+
+#################################################
 # ARGUMENTS
 #################################################
 
@@ -216,6 +284,25 @@ def mk_arg_parser():
     #                            help="input UDPipe model",
     #                            metavar="FILE")
 
+    parser_tagset = subparsers.add_parser(
+        'tagset', help='determine XPOS -> UPOS/Feats tagset conversion')
+    parser_tagset.add_argument("-i",
+                               dest="paths",
+                               required=True,
+                               nargs='+',
+                               help="input .conllu/.cupt files",
+                               metavar="FILE")
+    parser_tagset.add_argument("--feats",
+                               dest="feat_path",
+                               required=True,
+                               help="feature conversion map",
+                               metavar="FILE")
+    parser_tagset.add_argument("--upos",
+                               dest="upos_path",
+                               required=True,
+                               help="upos conversion map",
+                               metavar="FILE")
+
     return parser
 
 
@@ -292,6 +379,20 @@ def do_align(arcs):
 
 
 #################################################
+# TAGSET
+#################################################
+
+
+def do_tagset(args):
+    dataset = collect_dataset(args.paths)
+    upos_map, feat_map = tagset_mapping(dataset)
+    upos_map = most_common(upos_map)
+    feat_map = most_common(feat_map)
+    save_mapping(upos_map, args.upos_path)
+    save_mapping(feat_map, args.feat_path)
+
+
+#################################################
 # MAIN
 #################################################
 
@@ -305,5 +406,5 @@ if __name__ == '__main__':
         do_parse(args)
     if args.command == 'align':
         do_align(args)
-    # if args.command == 'conllu':
-    #     do_process_conllu(args)
+    if args.command == 'tagset':
+        do_tagset(args)
