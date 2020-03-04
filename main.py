@@ -134,6 +134,8 @@ def parse_with_udpipe(model, sent: TokenList, use_tagger=True) -> TokenList:
     assert not error.occurred()
     parsed = conllu.parse(processed)
     assert len(parsed) == 1
+    # Copy original metadata
+    parsed[0].metadata = sent.metadata
     return parsed[0]
 
 
@@ -424,14 +426,16 @@ def do_split(args):
                 # Update the source id information
                 sid = get_sent_id(sent)
                 if src == PDB:
-                    new_sid = ' '.join([PDB_uri, PDB_path, sid])
+                    src_sid = ' '.join([PDB_uri, PDB_path, sid])
                 elif src == PCC:
-                    new_sid = ' '.join([PCC_uri, PCC_path, sid])
+                    src_sid = ' '.join([PCC_uri, PCC_path, sid])
                 elif src == NKJP:
-                    new_sid = ' '.join([NKJP_uri, NKJP_path, sid])
+                    src_sid = ' '.join([NKJP_uri, NKJP_path, sid])
                 else:
                     raise Exception("source unknown")
-                sent.metadata['source_sent_id'] = new_sid
+                # Update both IDs
+                sent.metadata['orig_file_sentence'] = sid
+                sent.metadata['source_sent_id'] = src_sid
                 # Serialize and print the updated sentence
                 data_file.write(sent.serialize())
 
@@ -489,6 +493,8 @@ def do_align(arcs):
         # print(dst.metadata['text'])
         # print("=>", src is not None)
         assert src is not None
+        # Copy metadata
+        src.metadata = dst.metadata
         print(src.serialize(), end='')
 
 
