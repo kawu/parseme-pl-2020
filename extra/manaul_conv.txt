@@ -1,0 +1,47 @@
+XPOS	UPOS	FEATS	SIMILAR-CASE
+adj:pl:dat:f:sup	ADJ	Case=Dat|Degree=Sup|Gender=Fem|Number=Plur	adj:pl:dat:m1:sup ==> Animacy=Hum|Case=Dat|Degree=Sup|Gender=Masc|Number=Plur
+adj:pl:inst:m1:com	ADJ	Animacy=Hum|Case=Ins|Degree=Cmp|Gender=Masc|Number=Plur	adj:pl:inst:m3:com ==> Animacy=Inan|Case=Ins|Degree=Cmp|Gender=Masc|Number=Plur
+adj:pl:inst:n:com	ADJ	Case=Ins|Degree=Cmp|Gender=Neut|Number=Plur	adj:pl:inst:n:pos ==> Case=Ins|Degree=Pos|Gender=Neut|Number=Plur
+adj:sg:dat:m1:sup	ADJ	Animacy=Hum|Case=Dat|Degree=Sup|Gender=Masc|Number=Sing	adj:sg:dat:m1:pos ==> Animacy=Hum|Case=Dat|Degree=Pos|Gender=Masc|Number=Sing	
+adj:sg:dat:m3:sup	ADJ	Animacy=Inan|Case=Dat|Degree=Sup|Gender=Masc|Number=Sing	adj:sg:dat:m3:pos ==> Animacy=Inan|Case=Dat|Degree=Pos|Gender=Masc|Number=Sing
+adj:sg:dat:n:sup	ADJ	Case=Dat|Degree=Sup|Gender=Neut|Number=Sing	adj:sg:dat:n:pos ==> Case=Dat|Degree=Pos|Gender=Neut|Number=Sing
+adj:sg:voc:f:sup	ADJ	Case=Voc|Degree=Sup|Gender=Fem|Number=Sing	adj:sg:voc:f:pos ==> Case=Voc|Degree=Pos|Gender=Fem|Number=Sing
+burk	X	Foreign=No
+ger:sg:loc:n:perf:neg	NOUN	Aspect=Perf|Case=Loc|Gender=Neut|Number=Sing|Polarity=Neg|VerbForm=Vnoun	ger:sg:loc:n:perf:aff ==> Aspect=Perf|Case=Loc|Gender=Neut|Number=Sing|Polarity=Pos|VerbForm=Vnoun, ger:sg:loc:n:imperf:neg ==> Aspect=Imp|Case=Loc|Gender=Neut|Number=Sing|Polarity=Neg|VerbForm=Vnoun
+numcol:pl:acc:m1:rec	NUM	Animacy=Hum|Case=Acc|Gender=Masc|Number=Plur|NumForm=Word|NumType=Sets	dwóch,num:pl:acc:m1:rec	==> NUM,Animacy=Hum|Case=Acc|Gender=Masc|Number=Plur|NumForm=Word
+numcol:pl:gen:n:congr	NUM	Case=Gen|Gender=Neut|Number=Plur|NumForm=Word|NumType=Sets	stu,num:pl:gen:n:congr ==> NUM,Case=Gen|Gender=Neut|Number=Plur|NumForm=Digit(error)|NumType=Card
+numcol:pl:nom:m1:rec	NUM	Animacy=Hum|Case=Nom|Gender=Masc|Number=Plur|NumForm=Word|NumType=Sets	kilkunastu,num:pl:nom:m1:rec ==> NUM,Animacy=Hum|Case=Nom|Gender=Masc|Number=Plur|NumForm=Word
+numcol:pl:nom:n:rec	NUM	Case=Nom|Gender=Neut|Number=Plur|NumForm=Word|NumType=Sets	Siedem,num:pl:nom:n:rec ==> DET,Case=Nom|Gender=Neut|Number=Plur|NumType=Card|PronType=Ind
+num:pl:gen:m1:rec	NUM	Animacy=Hum|Case=Gen|Gender=Masc|Number=Plur|NumForm=Digit	dwóch,num:pl:gen:m1:congr ==> NUM,Animacy=Hum|Case=Gen|Gender=Masc|Number=Plur|NumForm=Word
+num:pl:inst:n:congr	NUM	Case=Ins|Gender=Neut|Number=Plur|NumForm=Digit	200,num:pl:inst:f:congr ==> NUM,Case=Ins|Gender=Fem|Number=Plur|NumForm=Word
+num:pl:loc:m2:congr	NUM	Animacy=Nhum|Case=Loc|Gender=Masc|Number=Plur|NumForm=Digit	dwóch,num:pl:loc:m3:congr ==> Animacy=Inan|Case=Loc|Gender=Masc|Number=Plur|NumForm=Word
+num:pl:loc:m2:rec	NUM	Animacy=Nhum|Case=Loc|Gender=Masc|Number=Plur|NumForm=Digit
+num:pl:nom:n:congr	NUM	Case=Nom|Gender=Neut|Number=Plur|NumForm=Word	Dwie,num:pl:nom:f:congr ==> NUM,Case=Nom|Gender=Fem|Number=Plur|NumForm=Word
+ppas:pl:dat:f:perf:neg	ADJ	Aspect=Perf|Case=Dat|Gender=Fem|Number=Plur|Polarity=Neg|VerbForm=Part|Voice=Pass	poszkodowanym,ppas:pl:dat:f:perf:aff ==> ADJ,Aspect=Perf|Case=Dat|Gender=Fem|Number=Plur|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:pl:dat:m3:perf:aff	ADJ	Animacy=Inan|Aspect=Perf|Case=Dat|Gender=Masc|Number=Plur|Polarity=Pos|VerbForm=Part|Voice=Pass	przysłanym,ppas:pl:dat:m1:perf:aff ==> ADJ,Animacy=Hum|Aspect=Perf|Case=Dat|Gender=Masc|Number=Plur|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:pl:inst:m1:imperf:aff	ADJ	Animacy=Hum|Aspect=Imp|Case=Ins|Gender=Masc|Number=Plur|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:pl:loc:f:perf:neg	ADJ	Aspect=Perf|Case=Loc|Gender=Fem|Number=Plur|Polarity=Neg|VerbForm=Part|Voice=Pass
+ppas:pl:loc:m2:imperf:aff	ADJ	Animacy=Nhum|Aspect=Imp|Case=Loc|Gender=Masc|Number=Plur|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:pl:nom:f:imperf:neg	ADJ	Aspect=Imp|Case=Nom|Gender=Fem|Number=Plur|Polarity=Neg|VerbForm=Part|Voice=Pass
+ppas:pl:nom:m1:imperf:neg	ADJ	Animacy=Hum|Aspect=Imp|Case=Nom|Gender=Masc|Number=Plur|Polarity=Neg|VerbForm=Part|Voice=Pass
+ppas:sg:acc:m2:imperf:aff	ADJ	Animacy=Nhum|Aspect=Imp|Case=Acc|Gender=Masc|Number=Sing|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:sg:dat:f:imperf:aff	ADJ	Aspect=Imp|Case=Dat|Gender=Fem|Number=Sing|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:sg:gen:m2:imperf:aff	ADJ	Animacy=Nhum|Aspect=Imp|Case=Gen|Gender=Masc|Number=Sing|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:sg:inst:m2:imperf:aff	ADJ	Animacy=Nhum|Aspect=Imp|Case=Ins|Gender=Masc|Number=Sing|Polarity=Pos|VerbForm=Part|Voice=Pass
+ppas:sg:inst:n:imperf:neg	ADJ	Aspect=Imp|Case=Ins|Gender=Neut|Number=Sing|Polarity=Neg|VerbForm=Part|Voice=Pass
+ppron12:pl:acc:f:pri	PRON	Case=Acc|Gender=Fem|Number=Plur|Person=1|PronType=Prs	nas,ppron12:pl:acc:m1:pri ==> PRON,Animacy=Hum|Case=Acc|Gender=Masc|Number=Plur|Person=1|PronType=Prs
+ppron12:pl:dat:f:pri	PRON	Case=Dat|Gender=Fem|Number=Plur|Person=1|PronType=Prs
+ppron12:sg:nom:n:sec	PRON	Case=Nom|Gender=Neut|Number=Sing|Person=2|PronType=Prs
+ppron3:pl:acc:m2:ter:akc:praep	PRON	Animacy=Nhum|Case=Acc|Gender=Masc|Number=Plur|Person=3|PrepCase=Pre|PronType=Prs|Variant=Long	ich,ppron3:pl:acc:m2:ter:akc:npraep ==> PRON,Animacy=Nhum|Case=Acc|Gender=Masc|Number=Plur|Person=3|PrepCase=Npr|PronType=Prs|Variant=Long
+ppron3:pl:dat:m3:ter:akc:praep	PRON	Animacy=Inan|Case=Dat|Gender=Masc|Number=Plur|Person=3|PrepCase=Pre|PronType=Prs|Variant=Long
+ppron3:sg:nom:f:ter:akc:praep	PRON	Case=Nom|Gender=Fem|Number=Plur|Person=3|PrepCase=Pre|PronType=Prs|Variant=Long
+qub	#Zob osobny plik
+subst:pl:acc:n	NOUN	Case=Acc|Gender=Neut|Number=Plur	subst:pl:acc:f ==> Case=Acc|Gender=Fem|Number=Plur
+subst:pl:dat:n	NOUN	Case=Dat|Gender=Neut|Number=Plur	
+subst:pl:gen:n	NOUN	Case=Gen|Gender=Neut|Number=Plur	
+subst:pl:inst:n	NOUN	Case=Ins|Gender=Neut|Number=Plur	
+subst:pl:nom:n	NOUN	Case=Nom|Gender=Neut|Number=Plur	
+subst:sg:acc:n	NOUN	Case=Acc|Gender=Neut|Number=Sing	
+subst:sg:dat:n	NOUN	Case=Dat|Gender=Neut|Number=Sing	
+subst:sg:inst:n	NOUN	Case=Ins|Gender=Neut|Number=Sing	
+xxx	X	Foreign=Yes
