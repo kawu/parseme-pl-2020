@@ -6,7 +6,7 @@ adj:sg:dat:m1:sup	ADJ	Animacy=Hum|Case=Dat|Degree=Sup|Gender=Masc|Number=Sing	ad
 adj:sg:dat:m3:sup	ADJ	Animacy=Inan|Case=Dat|Degree=Sup|Gender=Masc|Number=Sing	adj:sg:dat:m3:pos ==> Animacy=Inan|Case=Dat|Degree=Pos|Gender=Masc|Number=Sing
 adj:sg:dat:n:sup	ADJ	Case=Dat|Degree=Sup|Gender=Neut|Number=Sing	adj:sg:dat:n:pos ==> Case=Dat|Degree=Pos|Gender=Neut|Number=Sing
 adj:sg:voc:f:sup	ADJ	Case=Voc|Degree=Sup|Gender=Fem|Number=Sing	adj:sg:voc:f:pos ==> Case=Voc|Degree=Pos|Gender=Fem|Number=Sing
-burk	X	Foreign=No
+burk	X	Foreign=No	
 ger:sg:loc:n:perf:neg	NOUN	Aspect=Perf|Case=Loc|Gender=Neut|Number=Sing|Polarity=Neg|VerbForm=Vnoun	ger:sg:loc:n:perf:aff ==> Aspect=Perf|Case=Loc|Gender=Neut|Number=Sing|Polarity=Pos|VerbForm=Vnoun, ger:sg:loc:n:imperf:neg ==> Aspect=Imp|Case=Loc|Gender=Neut|Number=Sing|Polarity=Neg|VerbForm=Vnoun
 numcol:pl:acc:m1:rec	NUM	Animacy=Hum|Case=Acc|Gender=Masc|Number=Plur|NumForm=Word|NumType=Sets	dwóch,num:pl:acc:m1:rec	==> NUM,Animacy=Hum|Case=Acc|Gender=Masc|Number=Plur|NumForm=Word
 numcol:pl:gen:n:congr	NUM	Case=Gen|Gender=Neut|Number=Plur|NumForm=Word|NumType=Sets	stu,num:pl:gen:n:congr ==> NUM,Case=Gen|Gender=Neut|Number=Plur|NumForm=Digit(error)|NumType=Card
@@ -35,7 +35,6 @@ ppron12:sg:nom:n:sec	PRON	Case=Nom|Gender=Neut|Number=Sing|Person=2|PronType=Prs
 ppron3:pl:acc:m2:ter:akc:praep	PRON	Animacy=Nhum|Case=Acc|Gender=Masc|Number=Plur|Person=3|PrepCase=Pre|PronType=Prs|Variant=Long	ich,ppron3:pl:acc:m2:ter:akc:npraep ==> PRON,Animacy=Nhum|Case=Acc|Gender=Masc|Number=Plur|Person=3|PrepCase=Npr|PronType=Prs|Variant=Long
 ppron3:pl:dat:m3:ter:akc:praep	PRON	Animacy=Inan|Case=Dat|Gender=Masc|Number=Plur|Person=3|PrepCase=Pre|PronType=Prs|Variant=Long
 ppron3:sg:nom:f:ter:akc:praep	PRON	Case=Nom|Gender=Fem|Number=Plur|Person=3|PrepCase=Pre|PronType=Prs|Variant=Long
-qub	#Zob osobny plik
 subst:pl:acc:n	NOUN	Case=Acc|Gender=Neut|Number=Plur	subst:pl:acc:f ==> Case=Acc|Gender=Fem|Number=Plur
 subst:pl:dat:n	NOUN	Case=Dat|Gender=Neut|Number=Plur	
 subst:pl:gen:n	NOUN	Case=Gen|Gender=Neut|Number=Plur	
@@ -44,4 +43,4 @@ subst:pl:nom:n	NOUN	Case=Nom|Gender=Neut|Number=Plur
 subst:sg:acc:n	NOUN	Case=Acc|Gender=Neut|Number=Sing	
 subst:sg:dat:n	NOUN	Case=Dat|Gender=Neut|Number=Sing	
 subst:sg:inst:n	NOUN	Case=Ins|Gender=Neut|Number=Sing	
-xxx	X	Foreign=Yes
+xxx	X	Foreign=Yes	

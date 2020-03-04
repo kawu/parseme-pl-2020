@@ -5,6 +5,7 @@ set -x
 
 # Paths
 DATA=data
+EXTRA=extra
 UDPIPE_PL=udpipe/models/polish-pdb-ud-2.5-191206.udpipe
 PARSEME_PL=parseme_corpus_pl
 PDB=PDB/UD_Polish-PDB
@@ -13,10 +14,10 @@ OUT=out
 TO_CUPT=./utils/st-organizers/to_cupt.py
 
 # Determine tagset conversion maps
-python3 main.py tagset -i $DATA/$PDB/*.conllu --upos $DATA/$OUT/upos_conv.txt --feats $DATA/$OUT/feat_conv.txt
+# python3 main.py tagset -i $DATA/$PDB/*.conllu --upos $DATA/$OUT/upos_conv.txt --feats $DATA/$OUT/feat_conv.txt
 
 # Perform conversion
-python3 main.py convert -i $DATA/$SPLIT/NKJP.cupt --upos $DATA/$OUT/upos_conv.txt --feats $DATA/$OUT/feat_conv.txt > $DATA/$OUT/input.cupt
+python3 main.py convert -i $DATA/$SPLIT/NKJP.cupt --upos $EXTRA/upos_conv.txt --feats $EXTRA/feat_conv.txt --qub $EXTRA/qub_conv.txt --manual $EXTRA/manual_conv.txt > $DATA/$OUT/input.cupt
 
 # Reparse (syntax level only)
 python3 main.py parse --disable-tagger -i $DATA/$OUT/input.cupt -m $DATA/$UDPIPE_PL > $DATA/$OUT/udpipe.conllu

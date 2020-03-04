@@ -6,4 +6,4 @@ niechaj	AUX	qub	_
 niech	AUX	qub	_
 nie	PART	qub	Polarity=Neg
 się	PRON	qub	PronType=Prs|Reflex=Yes
-_	PART	qub	_	#For any other word wit hthe qub class
+_	PART	qub	_

@@ -179,7 +179,10 @@ def align(source: List[TokenList], dest: List[TokenList]) \
 # Language-specific POS tag
 XPOS = str
 
-# Features and UPOS
+# Lemma
+Lemma = str
+
+# UPOS and Features
 UPOS = str
 Feats = str
 
@@ -233,6 +236,27 @@ def load_mapping(path: str) -> Dict[str, str]:
         for line in f:
             k, v = line.strip().split("\t")
             m[k] = v
+    return m
+
+
+def load_qub_mapping(path: str) -> Dict[Lemma, Tuple[UPOS, Feats]]:
+    """Load the mapping specified for qub's."""
+    m = dict()
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            lemma, xpos, _qub, feats = line.strip().split("\t")
+            m[lemma] = (xpos, feats)
+    return m
+
+
+def load_manual_mapping(path: str) -> Dict[XPOS, Tuple[UPOS, Feats]]:
+    """Load the mapping specified for qub's."""
+    m = dict()
+    with open(path, "r", encoding="utf-8") as f:
+        f.readline()    # ignore header
+        for line in f:
+            xpos, upos, feats, *rest = line.strip().split("\t")
+            m[xpos] = (upos, feats)
     return m
 
 
@@ -358,6 +382,16 @@ def mk_arg_parser():
                                 required=True,
                                 help="upos conversion map",
                                 metavar="FILE")
+    parser_convert.add_argument("--qub",
+                                dest="qub_path",
+                                required=True,
+                                help="qub conversion map",
+                                metavar="FILE")
+    parser_convert.add_argument("--manual",
+                                dest="man_path",
+                                required=True,
+                                help="manual conversion map",
+                                metavar="FILE")
 
     return parser
 
@@ -365,6 +399,15 @@ def mk_arg_parser():
 #################################################
 # SPLIT
 #################################################
+
+
+# Source identifiers
+PDB_uri = "http://hdl.handle.net/11234/1-3105"
+PDB_path = "UD_Polish-PDB"
+PCC_uri = "http://zil.ipipan.waw.pl/PolishCoreferenceCorpus?action=AttachFile&do=get&target=PCC-0.92-TEI.zip"
+PCC_path = "."
+NKJP_uri = "http://clip.ipipan.waw.pl/NationalCorpusOfPolish?action=AttachFile&do=get&target=NKJP-PodkorpusMilionowy-1.2.tar.gz"
+NKJP_path = "."
 
 
 def do_split(args):
@@ -378,6 +421,17 @@ def do_split(args):
         out_path = args.out_dir + "/" + src + ".cupt"
         with open(out_path, "w", encoding="utf-8") as data_file:
             for sent in sents:
+                # Update the source id information
+                sid = get_sent_id(sent)
+                if src == PDB:
+                    new_sid = ' '.join([PDB_uri, PDB_path, sid])
+                elif src == PCC:
+                    new_sid = ' '.join([PCC_uri, PCC_path, sid])
+                elif src == NKJP:
+                    new_sid = ' '.join([NKJP_uri, NKJP_path, sid])
+                else:
+                    raise Exception("source unknown")
+                sent.metadata['source_sent_id'] = new_sid
                 # Serialize and print the updated sentence
                 data_file.write(sent.serialize())
 
@@ -456,26 +510,45 @@ def do_convert(args):
     # Load conversion maps
     upos_map = load_mapping(args.upos_path)
     feat_map = load_mapping(args.feat_path)
+    main_map = {
+        key: (upos_map[key], feat_map[key])
+        for key in upos_map.keys()
+    }
+    qub_map = load_qub_mapping(args.qub_path)
+    man_map = load_manual_mapping(args.man_path)
 
-    # Conversion w.r.t to the given conversion map
-    def convert(m, x, todo):
-        if x in m:
-            return m[x]
+    # # Conversion w.r.t to the given conversion map
+    # def convert(m, x, todo):
+    #     if x in m:
+    #         return m[x]
+    #     else:
+    #         return todo
+
+    # def convert_sent(conv, dest_col, sent, todo):
+    #     for tok in sent:
+    #         # print("A", tok, file=sys.stderr)
+    #         xpos = tok['xpostag']
+    #         tok[dest_col] = convert(conv, xpos, todo)
+    #         # print("B", tok, file=sys.stderr)
+
+    def convert_tok(tok):
+        xpos = tok['xpostag']
+        if xpos == 'qub':
+            default = "PART", "_"
+            upos, feats = qub_map.get(xpos, default)
+        elif xpos in man_map:
+            upos, feats = man_map[xpos]
         else:
-            return todo
-
-    def convert_sent(conv, dest_col, sent, todo):
-        for tok in sent:
-            # print("A", tok, file=sys.stderr)
-            xpos = tok['xpostag']
-            tok[dest_col] = convert(conv, xpos, todo)
-            # print("B", tok, file=sys.stderr)
+            default = "TODO", "_"
+            upos, feats = main_map.get(xpos, default)
 
     # Process dataset
     dataset = collect_dataset(args.paths)
     for sent in dataset:
-        convert_sent(upos_map, 'upostag', sent, "TODO")
-        convert_sent(feat_map, 'feats', sent, "TODO=TODO")
+        for tok in sent:
+            convert_tok(tok)
+        # convert_sent(upos_map, 'upostag', sent, "TODO")
+        # convert_sent(feat_map, 'feats', sent, "TODO=TODO")
         print(sent.serialize(), end='')
 
 
