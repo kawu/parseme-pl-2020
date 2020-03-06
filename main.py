@@ -473,9 +473,9 @@ def mk_arg_parser():
 PDB_uri = "http://hdl.handle.net/11234/1-3105"
 PDB_path = "UD_Polish-PDB"
 PCC_uri = "http://zil.ipipan.waw.pl/PolishCoreferenceCorpus?action=AttachFile&do=get&target=PCC-0.92-TEI.zip"
-PCC_path = "."
+# PCC_path = "."
 NKJP_uri = "http://clip.ipipan.waw.pl/NationalCorpusOfPolish?action=AttachFile&do=get&target=NKJP-PodkorpusMilionowy-1.2.tar.gz"
-NKJP_path = "."
+# NKJP_path = "."
 
 
 def do_split(args):
@@ -494,13 +494,19 @@ def do_split(args):
                 # Update the source id information
                 sid = get_sent_id(sent)
                 if src == PDB:
-                    # Special handling of PDB
-                    sent_id = sent.metadata['sent_id']
-                    src_sid = ' '.join([PDB_uri, PDB_path, sent_id])
+                    src_sid = ' '.join([PDB_uri, PDB_path, sid])
                 elif src == PCC:
-                    src_sid = ' '.join([PCC_uri, PCC_path, sid])
+                    file_id, *sid = sid.split("_")
+                    sid = '_'.join(sid)
+                    assert sid.startswith("morph")
+                    path = "long/" + file_id + "/ann_morphosyntax.xml"
+                    src_sid = ' '.join([PCC_uri, path, sid])
                 elif src == NKJP:
-                    src_sid = ' '.join([NKJP_uri, NKJP_path, sid])
+                    file_id, *sid = sid.split("_")
+                    sid = '_'.join(sid)
+                    assert sid.startswith("morph")
+                    path = file_id + "/ann_morphosyntax.xml"
+                    src_sid = ' '.join([NKJP_uri, path, sid])
                 else:
                     raise Exception("source unknown")
                 # Update both IDs
@@ -555,7 +561,7 @@ def do_parse(args):
 
 
 #################################################
-# ALIGN
+# ALIGN (PDB)
 #################################################
 
 
@@ -567,8 +573,19 @@ def do_align(arcs):
         # print(dst.metadata['text'])
         # print("=>", src is not None)
         assert src is not None
-        # Copy metadata
-        src.metadata = dst.metadata
+
+        # At this point we construct the metadata based
+        # on the metadata present in the true PDB (source)
+        sid = src.metadata['sent_id']
+        src_sid = ' '.join([PDB_uri, PDB_path, sid])
+        orig_sid = get_sent_id(src)
+        text = src.metadata['text']
+        src.metadata = {}
+        src.metadata['source_sent_id'] = src_sid
+        src.metadata['orig_sent_id'] = orig_sid
+        src.metadata['text'] = text
+
+        # Print
         print(src.serialize(), end='')
 
 
