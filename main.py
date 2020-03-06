@@ -514,10 +514,10 @@ def do_split(args):
 
 
 def do_parse(args):
-    _cols, dataset = collect_dataset(args.paths)
+    cols, dataset = collect_dataset(args.paths)
     model = Model.load(args.udpipe_model)
-    # if cols:
-    #     write_glob_cols(cols, file=sys.stdout)
+    if cols:
+        write_glob_cols(cols, file=sys.stdout)
     for sent in dataset:
         if args.parse_raw:
             text = sent.metadata["text"]
