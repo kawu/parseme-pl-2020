@@ -5,7 +5,7 @@ set -x
 
 # Paths
 DATA=data
-PARSEME_PL=parseme_corpus_pl
+PARSEME_PL=parseme_pl_old
 PDB=PDB/UD_Polish-PDB
 SPLIT=split
 OUT=out

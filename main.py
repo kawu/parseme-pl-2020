@@ -494,7 +494,9 @@ def do_split(args):
                 # Update the source id information
                 sid = get_sent_id(sent)
                 if src == PDB:
-                    src_sid = ' '.join([PDB_uri, PDB_path, sid])
+                    # Special handling of PDB
+                    sent_id = sent.metadata['sent_id']
+                    src_sid = ' '.join([PDB_uri, PDB_path, sent_id])
                 elif src == PCC:
                     src_sid = ' '.join([PCC_uri, PCC_path, sid])
                 elif src == NKJP:
@@ -504,6 +506,7 @@ def do_split(args):
                 # Update both IDs
                 sent.metadata['orig_file_sentence'] = sid
                 sent.metadata['source_sent_id'] = src_sid
+                del sent.metadata['sent_id']
                 # Serialize and print the updated sentence
                 data_file.write(sent.serialize())
 

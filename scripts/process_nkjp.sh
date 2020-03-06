@@ -7,7 +7,6 @@ set -x
 DATA=data
 CONV=conv
 UDPIPE_PL=udpipe/models/polish-pdb-ud-2.5-191206.udpipe
-PARSEME_PL=parseme_corpus_pl
 PDB=PDB/UD_Polish-PDB
 SPLIT=split
 OUT=out

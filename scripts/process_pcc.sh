@@ -6,7 +6,6 @@ set -x
 # Paths
 DATA=data
 UDPIPE_PL=udpipe/models/polish-pdb-ud-2.5-191206.udpipe
-PARSEME_PL=parseme_corpus_pl
 SPLIT=split
 OUT=out
 TO_CUPT=./utils/st-organizers/to_cupt.py
