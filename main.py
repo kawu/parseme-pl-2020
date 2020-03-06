@@ -518,7 +518,7 @@ def do_split(args):
 
 
 #################################################
-# PARSE
+# PARSE (NKJP, PCC)
 #################################################
 
 
@@ -535,29 +535,9 @@ def do_parse(args):
             use_tagger = not args.disable_tagger
             parsed = [parse_with_udpipe(model, sent, use_tagger=use_tagger)]
         for sent in parsed:
+            # We don't want to keep orig_file_sentence for NKJP or PCC
+            del sent.metadata['orig_file_sentence']
             print(sent.serialize(), end='')
-
-
-#################################################
-# PROCESS conllu .tar.xz
-#################################################
-
-
-# def do_process_conllu(args):
-#     print("# reading model:", args.udpipe_model)
-#     model = Model.load(args.udpipe_model)
-#     tar = tarfile.open(args.tar_path, "r:*", encoding="utf-8")
-#     for member in tar.getmembers():
-#         print("#", member.name)
-#         # with out_file =
-#         inp_file = tar.extractfile(member)
-#         for sent in conllu.parse_incr(inp_file):
-#             text = sent.metadata["text"]
-#             parsed = parse_raw_with_udpipe(model, text)
-#             for sent in parsed:
-#                 print(sent.serialize(), end='')
-#         # if f is not None:
-#         #     dataset =
 
 
 #################################################
@@ -582,7 +562,7 @@ def do_align(arcs):
         text = src.metadata['text']
         src.metadata = {}
         src.metadata['source_sent_id'] = src_sid
-        src.metadata['orig_sent_id'] = orig_sid
+        src.metadata['orig_file_sentence'] = orig_sid
         src.metadata['text'] = text
 
         # Print

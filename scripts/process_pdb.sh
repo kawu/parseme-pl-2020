@@ -19,5 +19,5 @@ python3 main.py align -d $DATA/$SPLIT/PDB.cupt -s $DATA/$PDB/*.conllu > $DATA/$O
 # Merge the original .cupt file with aligned PDB.
 cd $DATA
 $TO_CUPT --input $SPLIT/PDB.cupt --conllu $OUT/pdb_aligned.conllu --lang PL > $OUT/PDB.cupt
-# rm $OUT/pdb_aligned.conllu
+rm $OUT/pdb_aligned.conllu
 cd ..
