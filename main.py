@@ -25,6 +25,33 @@ from ufal.udpipe import Pipeline, ProcessingError, Model
 
 
 #################################################
+# TYPES
+#################################################
+
+
+# Global columns meta-data
+GlobalColumns = str
+
+
+#################################################
+# CONSTANTS
+#################################################
+
+
+# Global columns meta-data
+GLOBAL_COLUMNS_KEY = "global.columns"
+
+# MWE column
+MWE_COL = "parseme:mwe"
+
+# XPOS, UPOS, ...
+XPOS = "xpos"
+UPOS = "upos"
+FEATS = "feats"
+LEMMA = "lemma"
+
+
+#################################################
 # UTILS
 #################################################
 
@@ -34,12 +61,33 @@ def get_sent_id(sent: TokenList) -> str:
     return sent.metadata["orig_file_sentence"].split('#')[0]
 
 
-def collect_dataset(paths: List[str]) -> Iterable[TokenList]:
+def collect_dataset(paths: List[str]) \
+        -> Tuple[GlobalColumns, Iterable[TokenList]]:
     """Collect the dataset from the given .cupt files."""
-    for path in paths:
-        with open(path, "r", encoding="utf-8") as data_file:
-            for sent in conllu.parse_incr(data_file):
-                yield sent
+
+    def get_columns():
+        assert len(paths) > 0
+        with open(paths[0], "r", encoding="utf-8") as data_file:
+            header_line = data_file.readline().strip()
+            if header_line.startswith("# " + GLOBAL_COLUMNS_KEY + " ="):
+                assert "=" not in GLOBAL_COLUMNS_KEY
+                return header_line.split("=")[1].strip()
+            else:
+                return None
+
+    def iterate():
+        for path in paths:
+            with open(path, "r", encoding="utf-8") as data_file:
+                for sent in conllu.parse_incr(data_file):
+                    if GLOBAL_COLUMNS_KEY in sent.metadata:
+                        del sent.metadata[GLOBAL_COLUMNS_KEY]
+                    yield sent
+
+    return get_columns(), iterate()
+
+
+def write_glob_cols(cols, file):
+    file.write("# " + GLOBAL_COLUMNS_KEY + " = " + cols + "\n")
 
 
 #################################################
@@ -130,13 +178,31 @@ def parse_with_udpipe(model, sent: TokenList, use_tagger=True) -> TokenList:
     pipeline = Pipeline(model, "conllu", tagger_opt,
                         Pipeline.DEFAULT, "conllu")
     error = ProcessingError()
+
+    # Remove the MWE column if any
+    mwes = []
+    for tok in sent:
+        if MWE_COL in tok:
+            mwes.append(tok[MWE_COL])
+            del tok[MWE_COL]
+
+    # Perform parsing, check errors
     processed = pipeline.process(sent.serialize(), error)
+    if error.occurred():
+        print("ERROR: ", error.message)
     assert not error.occurred()
     parsed = conllu.parse(processed)
     assert len(parsed) == 1
+    parsed = parsed[0]
+
     # Copy original metadata
-    parsed[0].metadata = sent.metadata
-    return parsed[0]
+    parsed.metadata = sent.metadata
+
+    # Restore the MWE column
+    for tok, mwe in zip(parsed, mwes):
+        tok[MWE_COL] = mwe
+
+    return parsed
 
 
 #################################################
@@ -154,7 +220,7 @@ def data_by_id(dataset: Iterable[TokenList]) -> Dict[str, TokenList]:
     return res
 
 
-def align(source: List[TokenList], dest: List[TokenList]) \
+def align(source: Iterable[TokenList], dest: Iterable[TokenList]) \
         -> List[Tuple[TokenList, Optional[TokenList]]]:
     """For each sentence in `dest`, find the corresponding sentence
     in `source`.
@@ -179,19 +245,19 @@ def align(source: List[TokenList], dest: List[TokenList]) \
 
 
 # Language-specific POS tag
-XPOS = str
+XPos = str
 
 # Lemma
 Lemma = str
 
 # UPOS and Features
-UPOS = str
+UPos = str
 Feats = str
 
 
 def tagset_mapping(dataset: List[TokenList]) \
-        -> Tuple[Dict[XPOS, typing.Counter[UPOS]],
-                 Dict[XPOS, typing.Counter[Feats]]]:
+        -> Tuple[Dict[XPos, typing.Counter[UPos]],
+                 Dict[XPos, typing.Counter[Feats]]]:
     """Determine the set of UPOS tags and feature dictionaries
     for each XPOS in the given dataset.
     """
@@ -206,9 +272,9 @@ def tagset_mapping(dataset: List[TokenList]) \
     for sent in dataset:
         for tok in sent:
             # print(tok)
-            xpos = tok['xpostag']
-            upos = tok['upostag']
-            feats = serialize_field(tok['feats'])
+            xpos = tok[XPOS]
+            upos = tok[UPOS]
+            feats = serialize_field(tok[FEATS])
             update_map(upos_map, xpos, upos)
             update_map(feat_map, xpos, feats)
 
@@ -241,7 +307,7 @@ def load_mapping(path: str) -> Dict[str, str]:
     return m
 
 
-def load_qub_mapping(path: str) -> Dict[Lemma, Tuple[UPOS, Feats]]:
+def load_qub_mapping(path: str) -> Dict[Lemma, Tuple[UPos, Feats]]:
     """Load the mapping specified for qub's."""
     m = dict()
     with open(path, "r", encoding="utf-8") as f:
@@ -251,7 +317,7 @@ def load_qub_mapping(path: str) -> Dict[Lemma, Tuple[UPOS, Feats]]:
     return m
 
 
-def load_manual_mapping(path: str) -> Dict[XPOS, Tuple[UPOS, Feats]]:
+def load_manual_mapping(path: str) -> Dict[XPos, Tuple[UPos, Feats]]:
     """Load the mapping specified for qub's."""
     m = dict()
     with open(path, "r", encoding="utf-8") as f:
@@ -413,15 +479,17 @@ NKJP_path = "."
 
 
 def do_split(args):
-    dataset = collect_dataset(args.inp_paths)
+    glob_cols, dataset = collect_dataset(args.inp_paths)
+    assert glob_cols is not None
 
     # datadict = split_by_source(dataset)
-    pdb_ids = data_by_id(collect_dataset(args.pdb_paths)).keys()
+    pdb_ids = data_by_id(collect_dataset(args.pdb_paths)[1]).keys()
     datadict = split_by_origin(dataset, pdb_ud_ids=pdb_ids)
 
     for (src, sents) in datadict.items():
         out_path = args.out_dir + "/" + src + ".cupt"
         with open(out_path, "w", encoding="utf-8") as data_file:
+            write_glob_cols(glob_cols, data_file)
             for sent in sents:
                 # Update the source id information
                 sid = get_sent_id(sent)
@@ -446,8 +514,10 @@ def do_split(args):
 
 
 def do_parse(args):
-    dataset = collect_dataset(args.paths)
+    _cols, dataset = collect_dataset(args.paths)
     model = Model.load(args.udpipe_model)
+    # if cols:
+    #     write_glob_cols(cols, file=sys.stdout)
     for sent in dataset:
         if args.parse_raw:
             text = sent.metadata["text"]
@@ -487,8 +557,9 @@ def do_parse(args):
 
 
 def do_align(arcs):
-    source_data = list(collect_dataset(args.source))
-    dest_data = list(collect_dataset(args.dest))
+    src_cols, source_data = collect_dataset(args.source)
+    dst_cols, dest_data = collect_dataset(args.dest)
+    assert src_cols is None  # we print it on output
     for src, dst in align(source_data, dest_data):
         # print(dst.metadata['text'])
         # print("=>", src is not None)
@@ -538,18 +609,22 @@ def do_convert(args):
     #         # print("B", tok, file=sys.stderr)
 
     def convert_tok(tok):
-        xpos = tok['xpostag']
+        xpos = tok[XPOS]
         if xpos == 'qub':
             default = "PART", "_"
-            upos, feats = qub_map.get(xpos, default)
+            upos, feats = qub_map.get(tok[LEMMA], default)
         elif xpos in man_map:
             upos, feats = man_map[xpos]
         else:
             default = "TODO", "_"
             upos, feats = main_map.get(xpos, default)
+        tok[UPOS] = upos
+        tok[FEATS] = feats
 
     # Process dataset
-    dataset = collect_dataset(args.paths)
+    cols, dataset = collect_dataset(args.paths)
+    if cols:
+        write_glob_cols(cols, file=sys.stdout)
     for sent in dataset:
         for tok in sent:
             convert_tok(tok)

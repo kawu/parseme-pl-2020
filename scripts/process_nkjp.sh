@@ -20,11 +20,12 @@ TO_CUPT=./utils/st-organizers/to_cupt.py
 python3 main.py convert -i $DATA/$SPLIT/NKJP.cupt --upos $CONV/upos_conv.txt --feats $CONV/feat_conv.txt --qub $CONV/qub_conv.txt --manual $CONV/manual_conv.txt > $DATA/$OUT/input.cupt
 
 # Reparse (syntax level only)
-python3 main.py parse --disable-tagger -i $DATA/$OUT/input.cupt -m $DATA/$UDPIPE_PL > $DATA/$OUT/udpipe.conllu
+python3 main.py parse --disable-tagger -i $DATA/$OUT/input.cupt -m $DATA/$UDPIPE_PL > $DATA/$OUT/NKJP.cupt
+# python3 main.py parse --disable-tagger -i $DATA/$OUT/input.cupt -m $DATA/$UDPIPE_PL > $DATA/$OUT/udpipe.conllu
+rm $DATA/$OUT/input.cupt
 
-# Merge the input .cupt file with UDPipe's output.
-cd $DATA
-$TO_CUPT --input $OUT/input.cupt --conllu $OUT/udpipe.conllu --lang PL > $OUT/NKJP.cupt
-rm $OUT/input.cupt
-rm $OUT/udpipe.conllu
-cd ..
+# # Merge the input .cupt file with UDPipe's output.
+# cd $DATA
+# $TO_CUPT --input $OUT/input.cupt --conllu $OUT/udpipe.conllu --lang PL > $OUT/NKJP.cupt
+# rm $OUT/udpipe.conllu
+# cd ..
