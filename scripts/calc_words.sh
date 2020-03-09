@@ -16,7 +16,7 @@ for xz_file in $INP
 do
   # xz_file="$(basename -- $xz_file)"
   file="${xz_file%.*}"
-  unxz $xz_file
+  unxz --keep $xz_file
   python3 main.py words -i $file
-  xz $file
+  rm $file
 done
