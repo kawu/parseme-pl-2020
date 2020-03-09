@@ -10,14 +10,13 @@
 INP="$@"
 
 # Echo on
-# set -x
+set -x
 
 for xz_file in $INP
 do
-#   echo $xz_file
-  xz_file="$(basename -- $xz_file)"
+  # xz_file="$(basename -- $xz_file)"
   file="${xz_file%.*}"
-  unxz $INP/$xz_file
-  python3 main.py words -i $INP/$file
-  xz $INP/$file
+  unxz $xz_file
+  python3 main.py words -i $file
+  xz $file
 done
