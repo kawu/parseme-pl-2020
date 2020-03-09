@@ -461,6 +461,15 @@ def mk_arg_parser():
                                 help="manual conversion map",
                                 metavar="FILE")
 
+    parser_words = subparsers.add_parser(
+        'words', help='calculate words in the given files')
+    parser_words.add_argument("-i",
+                              dest="paths",
+                              required=True,
+                              nargs='+',
+                              help="input .conllu/.cupt files",
+                              metavar="FILE")
+
     return parser
 
 
@@ -634,6 +643,19 @@ def do_convert(args):
 
 
 #################################################
+# WORDS
+#################################################
+
+
+def do_words(args):
+    N = 0
+    cols, dataset = collect_dataset(args.paths)
+    for sent in dataset:
+        N += len(sent)
+    print(N)
+
+
+#################################################
 # MAIN
 #################################################
 
@@ -651,3 +673,5 @@ if __name__ == '__main__':
         do_tagset(args)
     if args.command == 'convert':
         do_convert(args)
+    if args.command == 'words':
+        do_words(args)
