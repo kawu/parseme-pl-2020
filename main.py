@@ -44,11 +44,17 @@ GLOBAL_COLUMNS_KEY = "global.columns"
 # MWE column
 MWE_COL = "parseme:mwe"
 
-# XPOS, UPOS, ...
+# FORM, XPOS, UPOS, ...
+FORM = "form"
 XPOS = "xpos"
 UPOS = "upos"
 FEATS = "feats"
 LEMMA = "lemma"
+
+# Features
+NUM_FORM = "NumForm"
+NUM_DIGIT = "Digit"
+NUM_WORD = "Word"
 
 
 #################################################
@@ -470,6 +476,15 @@ def mk_arg_parser():
                               help="input .conllu/.cupt files",
                               metavar="FILE")
 
+    parser_num = subparsers.add_parser(
+        'num', help='convert numerals')
+    parser_num.add_argument("-i",
+                            dest="paths",
+                            required=True,
+                            nargs='+',
+                            help="input .conllu/.cupt files",
+                            metavar="FILE")
+
     return parser
 
 
@@ -656,9 +671,46 @@ def do_words(args):
 
 
 #################################################
-# MAIN
+# NUMERALS
 #################################################
 
+
+def is_digit_num(form: str) -> bool:
+    """Is it a digit-based number?  Approximation."""
+    def pred(x):
+        return x.isdigit() or x in [',', '.', '-']
+    return all(pred(x) for x in form)
+
+
+# def is_word_num(form: str) -> bool:
+#     """Is it a word-based number?  Approximation."""
+#     # return any(x.isalpha() for x in form)
+#     return not is_digit_num(form)
+
+
+def do_nums(args):
+    cols, dataset = collect_dataset(args.paths)
+    for sent in dataset:
+        for tok in sent:
+            if tok[UPOS] == 'NUM':
+                feats = tok[FEATS]
+                if is_digit_num(tok[FORM]):
+                    feats[NUM_FORM] = NUM_DIGIT
+                else:
+                    feats[NUM_FORM] = NUM_WORD
+                # # print(feats)
+                # if feats[NUM_FORM] == NUM_WORD:
+                #     if is_digit_num(tok[FORM]):
+                #         print(tok)
+                # else:
+                #     if is_word_num(tok[FORM]):
+                #         print(tok)
+        print(sent.serialize(), end='')
+
+
+#################################################
+# MAIN
+#################################################
 
 if __name__ == '__main__':
     parser = mk_arg_parser()
@@ -675,3 +727,5 @@ if __name__ == '__main__':
         do_convert(args)
     if args.command == 'words':
         do_words(args)
+    if args.command == 'num':
+        do_nums(args)
