@@ -117,19 +117,17 @@ def split_by_origin(dataset: Iterable[TokenList], pdb_ud_ids: Set[str]) \
 #################################################
 
 
-def parse_raw_with_udpipe(model, text: str) -> List[TokenList]:
+def parse_raw_with_udpipe(model, text: str) -> TokenList:
     """Use UDPipe to parse the given raw text."""
-    pipeline = Pipeline(model, "tokenizer", Pipeline.DEFAULT,
+    pipeline = Pipeline(model, "tokenizer=presegmented", Pipeline.DEFAULT,
                         Pipeline.DEFAULT, "conllu")
     error = ProcessingError()
     processed = pipeline.process(text, error)
     assert not error.occurred()
     parsed = conllu.parse(processed)
-    # In metadata, keep only info about text
-    for sent in parsed:
-        meta = {'text': sent.metadata['text']}
-        sent.metadata = meta
-    return parsed
+    # There should be one sentence, thanks to the "presegmented" option
+    assert len(parsed) == 1
+    return parsed[0]
 
 
 def parse_with_udpipe(model, sent: TokenList, use_tagger=True) -> TokenList:
@@ -461,17 +459,17 @@ def do_parse(args):
     model = Model.load(args.udpipe_model)
     if cols:
         write_glob_cols(cols, file=sys.stdout)
-    for sent in dataset:
+    for inp_sent in dataset:
         if args.parse_raw:
-            text = sent.metadata["text"]
-            parsed = parse_raw_with_udpipe(model, text)
+            text = inp_sent.metadata["text"]
+            sent = parse_raw_with_udpipe(model, text)
+            sent.metadata = inp_sent.metadata
         else:
             use_tagger = not args.disable_tagger
-            parsed = [parse_with_udpipe(model, sent, use_tagger=use_tagger)]
-        for sent in parsed:
-            # # We don't want to keep orig_file_sentence for NKJP or PCC
-            # del sent.metadata['orig_file_sentence']
-            print(sent.serialize(), end='')
+            sent = parse_with_udpipe(model, inp_sent, use_tagger=use_tagger)
+        # # We don't want to keep orig_file_sentence for NKJP or PCC
+        # del sent.metadata['orig_file_sentence']
+        print(sent.serialize(), end='')
 
 
 #################################################
