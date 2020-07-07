@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from typing import List, Dict, Optional, Tuple, Iterable, Set
 import typing
 import argparse
@@ -8,6 +10,8 @@ from collections import Counter
 import conllu
 from conllu import TokenList
 from conllu.parser import serialize_field
+
+import parseme.cupt as cupt
 
 from ufal.udpipe import Pipeline, ProcessingError, Model
 
@@ -476,6 +480,21 @@ def mk_arg_parser():
                               help="input .conllu/.cupt files",
                               metavar="FILE")
 
+    parser_words = subparsers.add_parser(
+        'mwes', help='calculate MWE stats in the given files')
+    parser_words.add_argument("-i",
+                              dest="paths",
+                              required=True,
+                              nargs='+',
+                              help="input .cupt file(s)",
+                              metavar="FILE")
+    parser_words.add_argument("-g",
+                              dest="gold_paths",
+                              required=True,
+                              nargs='+',
+                              help="gold .cupt file(s)",
+                              metavar="FILE")
+
     parser_num = subparsers.add_parser(
         'num', help='convert numerals')
     parser_num.add_argument("-i",
@@ -709,6 +728,37 @@ def do_nums(args):
 
 
 #################################################
+# MWE STATS
+#################################################
+
+
+def stats_in(paths) -> Tuple[int, int]:
+    """Return the number of sentences in the given dataset collection."""
+    cols, dataset = collect_dataset(paths)
+    all_cats = Counter()
+    N = 0
+    for sent in dataset:
+        N += 1
+        mwes = cupt.retrieve_mwes(sent)
+        for mwe_id, mwe in mwes.items():
+            all_cats[mwe.cat] += 1
+    return N, sum(k for x, k in all_cats.items())
+
+
+def do_mwe_stats(args):
+    pred_N, pred_M = stats_in(args.paths)
+    gold_N, gold_M = stats_in(args.gold_paths)
+
+    if gold_N == pred_N:
+        print(f"Sentence number OK ({pred_N})")
+    else:
+        print(f"CRITICAL: Sentence numbers differ ({pred_N} vs {gold_N} in gold)")
+
+    if (pred_M < 0.5 * gold_M) or (pred_M > 2 * gold_M):
+        print(f"WARNING: Large number of MWE discrepancies ({pred_M} vs {gold_M} in gold)")
+
+
+#################################################
 # MAIN
 #################################################
 
@@ -727,5 +777,7 @@ if __name__ == '__main__':
         do_convert(args)
     if args.command == 'words':
         do_words(args)
+    if args.command == 'mwes':
+        do_mwe_stats(args)
     if args.command == 'num':
         do_nums(args)
