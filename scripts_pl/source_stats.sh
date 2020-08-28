@@ -20,5 +20,5 @@ x2=`grep "# source_sent_id" $data/PCC.cupt | wc -l`
 x3=`grep "# orig_file_sentence" $data/PDB.cupt $data/pl-pdb-* | cut -d' ' -f4 | grep "^130-" | wc -l`
 x4=`grep "# orig_file_sentence" $data/PDB.cupt $data/pl-pdb-* | cut -d' ' -f4 | grep -E $newspaper_names | wc -l`
 
-echo $x1, $x2, $x3, $x4
-echo $(($x1 + $x2 + $x3 + $x4))
+echo "# "$x1, $x2, $x3, $x4
+echo Total: $(($x1 + $x2 + $x3 + $x4))
